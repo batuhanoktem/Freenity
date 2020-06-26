@@ -1,3 +1,5 @@
+import { MessageStoreModel } from "../../models/message-store"
+import { LoginStoreModel } from "../../models/login-store"
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
 
 /**
@@ -5,6 +7,8 @@ import { Instance, SnapshotOut, types } from "mobx-state-tree"
  */
 // prettier-ignore
 export const RootStoreModel = types.model("RootStore").props({
+  messageStore: types.optional(MessageStoreModel, {}),
+  loginStore: types.optional(LoginStoreModel, {}),
 
 })
 

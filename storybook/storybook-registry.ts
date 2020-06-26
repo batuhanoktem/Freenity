@@ -1,3 +1,8 @@
+require("../app/components/full-screen-video/full-screen-video.story")
+require("../app/components/full-screen-video/full-screen-video.story")
+require("../app/components/menu/menu.story")
+require("../app/components/message/message.story")
+require("../app/components/message/message.story")
 require("../app/components/text/text.story")
 require("../app/components/button/button.story")
 require("../app/components/form-row/form-row.story")

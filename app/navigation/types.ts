@@ -5,4 +5,12 @@ export type RootParamList = {
 export type PrimaryParamList = {
   welcome: undefined
   demo: undefined
+  splash: undefined,
+  login: undefined,
+  register: undefined,
+  main: undefined,
+  messages: undefined,
+  imageGallery: undefined,
+  web: undefined,
+  webView: undefined
 }

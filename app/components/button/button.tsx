@@ -19,6 +19,7 @@ export function Button(props: ButtonProps) {
     style: styleOverride,
     textStyle: textStyleOverride,
     children,
+    activeOpacity = 0.6,
     ...rest
   } = props
 
@@ -30,7 +31,7 @@ export function Button(props: ButtonProps) {
   const content = children || <Text tx={tx} text={text} style={textStyle} />
 
   return (
-    <TouchableOpacity style={viewStyle} {...rest}>
+    <TouchableOpacity style={viewStyle} activeOpacity={activeOpacity} {...rest}>
       {content}
     </TouchableOpacity>
   )

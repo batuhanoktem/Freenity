@@ -1,0 +1,304 @@
+import * as React from "react"
+import {
+  View,
+  ImageStyle,
+  ViewStyle,
+  TouchableOpacity,
+  Image,
+  Animated,
+  TextStyle,
+  Keyboard,
+  ImageBackground,
+  FlatList,
+  TextInput,
+} from "react-native"
+import { useObserver } from "mobx-react-lite"
+import { Text, Message, Screen, TextField } from "../"
+import { useStores } from "../../models/root-store"
+import { newsStyles as styles } from "./news.styles"
+import { spacing, color, style } from "../../theme"
+import DocumentPicker from "react-native-document-picker"
+import { MessageRequestModel } from "../../models/message-request"
+import { useState, useEffect, useRef } from "react"
+import { NativeStackNavigationProp } from "react-native-screens/native-stack"
+import { ParamListBase } from "@react-navigation/native"
+
+const backgroundImage = require("../../images/background.png")
+const attachmentIcon = require("./images/attachment.png")
+const sentIcon = require("./images/icn-sent.png")
+
+export interface NewsProps {
+  navigation: NativeStackNavigationProp<ParamListBase>
+}
+
+const ROOT: ViewStyle = {
+  backgroundColor: "#f0eff4",
+}
+
+const MESSAGES: ViewStyle = {}
+
+const FILE: ImageStyle = {
+  width: 80,
+  height: 80,
+  marginRight: spacing[3],
+  resizeMode: "cover",
+  borderRadius: 20,
+}
+
+const REMOVE_FILE: ViewStyle = {
+  backgroundColor: color.palette.angry,
+  position: "absolute",
+  width: 20,
+  height: 20,
+  top: 0,
+  right: 0,
+  alignItems: "center",
+  borderRadius: 20,
+}
+
+const MESSAGE_TYPE: ViewStyle = {
+  flexDirection: "row",
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "center",
+}
+
+/**
+ * React.FunctionComponent for your hook(s) needs
+ *
+ * Component description here for TypeScript tips.
+ */
+export const News: React.FunctionComponent<NewsProps> = props => {
+  const { messageStore, loginStore } = useStores()
+
+  const adminHeight = useRef(new Animated.Value(100)).current
+  const [displayFiles, setDisplayFiles] = useState("none" as "none" | "flex")
+
+  let ws = new WebSocket("wss://www.freenity.news")
+
+  const startWebSocket = () => {
+    __DEV__ && console.tron.log("Websocket started.")
+    ws = new WebSocket(`wss://www.freenity.news`)
+    ws.onmessage = e => {
+      __DEV__ && console.tron.log(`Received: ${e.data}`)
+
+      let data = JSON.parse(e.data)
+      if (data.event === "delete") {
+        messageStore.deleteMessage(data.data.id, loginStore.accessToken)
+      }
+
+      if (!messageStore.refreshing) {
+        messageStore.getMessages(0, messageStore.language, loginStore.accessToken)
+      }
+    }
+    ws.onclose = e => {
+      __DEV__ && console.tron.log("Reconnecting: ", e.message)
+      setTimeout(startWebSocket, 5000)
+    }
+    ws.onerror = e => {
+      __DEV__ && console.tron.log(`Error: ${e.message}`)
+    }
+  }
+
+  const [message, setMessage] = useState(MessageRequestModel.create())
+  const [refreshFiles, setRefreshFiles] = useState(false)
+
+  const sendMessage = async () => {
+    const result: boolean = await messageStore.sendMessage(message, loginStore.accessToken)
+    if (result) {
+      ws.send(JSON.stringify({ event: "create", data: message }))
+      setMessage(MessageRequestModel.create())
+      Keyboard.dismiss()
+      setDisplayFiles("none")
+      Animated.timing(adminHeight, {
+        toValue: 100,
+        duration: 1000,
+      }).start()
+      setTimeout(() => {
+        if (flatList !== null) {
+          flatList.scrollToEnd({ animated: true })
+        }
+      }, 1500)
+    }
+  }
+
+  const ADMIN: ViewStyle = {
+    width: "100%",
+    height: adminHeight,
+    backgroundColor: color.palette.white,
+    padding: spacing[3],
+  }
+
+  const FILES: ViewStyle = {
+    display: displayFiles,
+    width: "100%",
+    height: 100,
+  }
+
+  const ICON: ImageStyle = {
+    flex: 1,
+    width: 24,
+    resizeMode: "contain",
+    marginTop: spacing[4],
+  }
+
+  const TEXT_FIELD_TEXT: ViewStyle = {
+    borderWidth: 1,
+    borderRadius: 15,
+    borderColor: color.palette.black,
+    flex: 1,
+    padding: spacing[3],
+    marginLeft: spacing[4],
+  }
+
+  const TEXT_FIELD: ViewStyle = {
+    width: "80%",
+  }
+
+  const SENT_ICON: ImageStyle = {
+    flex: 1,
+    width: 30,
+    resizeMode: "contain",
+    marginLeft: spacing[3],
+    marginTop: spacing[4],
+  }
+
+  const [flatList, setFlatList] = useState(null)
+
+  useEffect(() => {
+    if (flatList !== null) {
+      messageStore.clearMessages()
+      messageStore.saveOffset(0)
+      messageStore.getMessages(0, messageStore.language, loginStore.accessToken, () => {
+        setTimeout(() => {
+          if (flatList !== null) {
+            flatList.scrollToEnd({ animated: true })
+          }
+        }, 1500)
+      })
+
+      startWebSocket()
+    }
+  }, [flatList])
+
+  useEffect(() => {
+    if (messageStore.scrolling && flatList !== null) {
+      messageStore.saveScrolling(false)
+      flatList.scrollToEnd({ animated: true })
+    }
+  }, [messageStore.scrolling])
+
+  const renderMessage = message => {
+    return (
+      <Message
+        navigation={props.navigation}
+        message={message.item}
+        language={messageStore.language}
+      ></Message>
+    )
+  }
+
+  const removeFile = file => {
+    message.removeFile(file)
+    setRefreshFiles(true)
+    if (message.files.length === 0) {
+      setDisplayFiles("none")
+      Animated.timing(adminHeight, {
+        toValue: 100,
+        duration: 1000,
+      }).start()
+    }
+  }
+
+  const renderFile = file => {
+    setRefreshFiles(false)
+    const url: string = `https://www.freenity.news/${file.item.preview}`
+    return (
+      <View>
+        <Image style={FILE} source={{ uri: url }} />
+        <TouchableOpacity onPress={() => removeFile(file.item)} style={REMOVE_FILE}>
+          <Text>X</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
+  const onRefresh = () => {
+    if (!messageStore.refreshing) {
+      messageStore.saveOffset(messageStore.offset + 10)
+      messageStore.getMessages(messageStore.offset, messageStore.language, loginStore.accessToken)
+    }
+  }
+
+  const uploadFile = async () => {
+    const file = await DocumentPicker.pick({
+      type: [DocumentPicker.types.allFiles],
+    })
+    const result: boolean = await messageStore.uploadFile(message, file, loginStore.accessToken)
+
+    if (result) {
+      if (displayFiles === "none") {
+        setDisplayFiles("flex")
+        Animated.timing(adminHeight, {
+          toValue: 200,
+          duration: 1000,
+        }).start()
+      }
+      setRefreshFiles(true)
+    }
+  }
+
+  const logoPress = () => {
+    messageStore.saveFavourites(false)
+    messageStore.clearMessages()
+    messageStore.saveOffset(0)
+    messageStore.getMessages(0, messageStore.language, loginStore.accessToken, () => {
+      setTimeout(() => {
+        if (flatList !== null) {
+          flatList.scrollToEnd({ animated: true })
+        }
+      }, 1500)
+    })
+  }
+
+  return useObserver(() => (
+    <Screen style={ROOT} preset="fixed">
+      <ImageBackground source={backgroundImage} style={style.backgroundImage}>
+        <FlatList
+          ref={ref => setFlatList(ref)}
+          refreshing={messageStore.refreshing}
+          onRefresh={onRefresh}
+          style={MESSAGES}
+          data={messageStore.reverseMessages}
+          renderItem={renderMessage}
+        />
+        {loginStore.role === "sudo" && (
+          <Animated.View style={ADMIN}>
+            <FlatList
+              style={FILES}
+              data={message.files}
+              renderItem={renderFile}
+              extraData={refreshFiles}
+              horizontal={true}
+            />
+            <View style={MESSAGE_TYPE}>
+              <TouchableOpacity onPress={uploadFile}>
+                <Image style={ICON} source={attachmentIcon} />
+              </TouchableOpacity>
+              <TextField
+                placeholderTx="messagesScreen.news"
+                style={TEXT_FIELD}
+                inputStyle={TEXT_FIELD_TEXT}
+                value={message.comment}
+                onChangeText={comment => message.setComment(comment)}
+              />
+              <TouchableOpacity onPress={sendMessage}>
+                <Image style={SENT_ICON} source={sentIcon} />
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        )}
+      </ImageBackground>
+    </Screen>
+  ))
+}

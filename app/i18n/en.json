@@ -2,9 +2,34 @@
   "common": {
     "ok": "OK!",
     "cancel": "Cancel",
-    "back": "Back"
+    "back": "Back",
+    "login": "Login",
+    "nickname": "Nickname",
+    "logout": "Log out",
+    "password": "Password",
+    "confirm": "Confirm"
+  },
+  "menu": {
+    "about": "ABOUT APP",
+    "account": "ACCOUNT",
+    "description": "Freenity technology makes it possible to create your own website, thanks to which you can share information and news of your community with people from different countries in their language.",
+    "privacyPolicy": "Privacy Policy",
+    "userAgreement": "User Agreement",
+    "settings": "Settings",
+    "favourites": "Favourites",
+    "readOn": "Read on"
+  },
+  "tab": {
+    "news": "News",
+    "more": "More"
+  },
+  "dropdown": {
+    "title": "Select Language",
+    "searchLanguage": "Language"
   },
   "errors": {
+    "error": "Error",
+    "invalidPhoto": "Invalid photo url.",
     "invalidEmail": "Invalid email address."
   },
   "welcomeScreen": {
@@ -23,5 +48,36 @@
   "storybook": {
     "placeholder": "Placeholder",
     "field": "Field"
+  },
+  "splashScreen": {
+    "header": "Welcome to Freenity",
+    "subtitle": "a few words what this\napp about",
+    "login": "Login",
+    "register": "Create Account"
+  },
+  "loginScreen": {
+    "header": "Login",
+    "login": "Login",
+    "signUp": "Sign up",
+    "noAccount": "Don't have an account?",
+    "welcomeBack": "Welcome back",
+    "loginToContinue": "Login to continue\nusing our app"
+  },
+  "registerScreen": {
+    "header": "Register",
+    "register": "Create account",
+    "alreadyAccount": "Already have an account?",
+    "createAccount": "Create your Freenity account"
+  },
+  "messageScreen": {
+    "from": "from",
+    "author": "author",
+    "removeQuestion": "Are you sure you want to remove this post?",
+    "unfavouriteQuestion": "Are you sure you want to remove this post from your favorites?"
+  },
+  "messagesScreen": {
+    "link": "link",
+    "message": "message",
+    "news": "News text"
   }
 }
