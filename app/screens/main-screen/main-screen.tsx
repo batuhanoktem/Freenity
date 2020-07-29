@@ -104,7 +104,7 @@ export const MainScreen: React.FunctionComponent<MainScreenProps> = observer(pro
     messageStore.saveFavourites(false)
     messageStore.clearMessages()
     messageStore.saveOffset(0)
-    messageStore.getMessages(0, loginStore.accessToken, () => {
+    messageStore.getMessages(0, messageStore.language, loginStore.accessToken, () => {
       //setTimeout(() => flatList.scrollToEnd({ animated: true }), 1500)
     })
   }

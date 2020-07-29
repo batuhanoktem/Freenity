@@ -10,6 +10,7 @@ import { FileSnapshot, FileModel } from "../../models/file"
 import { MessageRequestSnapshot } from "../../models/message-request"
 import { DocumentPickerResponse } from "react-native-document-picker"
 import { UploadResponse, UploadResponseSnapshot } from "../../models/upload-response"
+import { ImagePickerResponse } from "react-native-image-picker"
 const { URL } = require("../../config/env")
 
 const convertMessage = (raw: any): MessageSnapshot => {
@@ -768,12 +769,12 @@ export class Api {
     }
   }
 
-  async uploadFile(file: DocumentPickerResponse): Promise<Types.GetUploadResult> {
+  async uploadFile(file: ImagePickerResponse): Promise<Types.GetUploadResult> {
     const data: FormData = new FormData()
     data.append("file", {
       uri: file.uri,
       type: file.type,
-      name: file.name,
+      name: file.fileName,
     })
     this.apisauce.setHeader("Content-Type", "multipart/form-data")
     const response: ApiResponse<any> = await this.apisauce.post("/upload", data)

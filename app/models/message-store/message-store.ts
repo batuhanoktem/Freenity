@@ -6,6 +6,7 @@ import { MessageRequest } from "../message-request"
 import { DocumentPickerResponse } from "react-native-document-picker"
 import { UploadResponseModel } from "../upload-response"
 import { FileModel, File } from "../file"
+import { ImagePickerResponse } from "react-native-image-picker"
 
 /**
  * Model description here for TypeScript hints.
@@ -121,7 +122,7 @@ export const MessageStoreModel = types
     }),
     uploadFile: flow(function*(
       message: MessageRequest,
-      file: DocumentPickerResponse,
+      file: ImagePickerResponse,
       accessToken: string,
     ) {
       self.environment.api.apisauce.setHeader("Authorization", `Bearer ${accessToken}`)

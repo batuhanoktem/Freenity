@@ -118,7 +118,7 @@ export const LoginScreen: React.FunctionComponent<LoginScreenProps> = observer(p
         tx="loginScreen.signUp"
         style={SIGNUP}
         textStyle={SIGNUP_TEXT}
-        onPress={() => props.navigation.push("register")}
+        onPress={() => props.navigation.navigate("register")}
       />
     </ImageBackground>
   )

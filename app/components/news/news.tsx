@@ -11,19 +11,23 @@ import {
   ImageBackground,
   FlatList,
   TextInput,
+  StatusBar,
 } from "react-native"
 import { useObserver } from "mobx-react-lite"
 import { Text, Message, Screen, TextField } from "../"
 import { useStores } from "../../models/root-store"
 import { newsStyles as styles } from "./news.styles"
 import { spacing, color, style } from "../../theme"
+import ImagePicker from "react-native-image-picker"
 import DocumentPicker from "react-native-document-picker"
-import { MessageRequestModel } from "../../models/message-request"
+import { MessageRequestModel, MessageRequest } from "../../models/message-request"
 import { useState, useEffect, useRef } from "react"
 import { NativeStackNavigationProp } from "react-native-screens/native-stack"
 import { ParamListBase } from "@react-navigation/native"
 
 const backgroundImage = require("../../images/background.png")
+const linkIcon = require("./images/link.png")
+const linkOpenIcon = require("./images/link-open.png")
 const attachmentIcon = require("./images/attachment.png")
 const sentIcon = require("./images/icn-sent.png")
 
@@ -32,7 +36,7 @@ export interface NewsProps {
 }
 
 const ROOT: ViewStyle = {
-  backgroundColor: "#f0eff4",
+  backgroundColor: "#00428c",
 }
 
 const MESSAGES: ViewStyle = {}
@@ -60,7 +64,7 @@ const MESSAGE_TYPE: ViewStyle = {
   flexDirection: "row",
   flex: 1,
   alignItems: "center",
-  justifyContent: "center",
+  justifyContent: "center"
 }
 
 /**
@@ -71,8 +75,9 @@ const MESSAGE_TYPE: ViewStyle = {
 export const News: React.FunctionComponent<NewsProps> = props => {
   const { messageStore, loginStore } = useStores()
 
-  const adminHeight = useRef(new Animated.Value(100)).current
+  const adminHeight = useRef(new Animated.Value(50)).current
   const [displayFiles, setDisplayFiles] = useState("none" as "none" | "flex")
+  const [displayLink, setDisplayLink] = useState("none" as "none" | "flex")
 
   let ws = new WebSocket("wss://www.freenity.news")
 
@@ -101,17 +106,30 @@ export const News: React.FunctionComponent<NewsProps> = props => {
   }
 
   const [message, setMessage] = useState(MessageRequestModel.create())
+  const [link, setLink] = useState(MessageRequestModel.create())
   const [refreshFiles, setRefreshFiles] = useState(false)
 
   const sendMessage = async () => {
-    const result: boolean = await messageStore.sendMessage(message, loginStore.accessToken)
+    let request: MessageRequest = MessageRequestModel.create()
+    if (link.comment !== null && message.comment !== null) {
+      request.setComment(message.comment +  " " + link.comment)
+    } else if (message.comment !== null) {
+      request.setComment(message.comment)
+    } else if (link.comment !== null) {
+      request.setComment(link.comment)
+    } else {
+      request.setComment("")
+    }
+    const result: boolean = await messageStore.sendMessage(request, loginStore.accessToken)
     if (result) {
-      ws.send(JSON.stringify({ event: "create", data: message }))
+      ws.send(JSON.stringify({ event: "create", data: request }))
       setMessage(MessageRequestModel.create())
+      setLink(MessageRequestModel.create())
       Keyboard.dismiss()
       setDisplayFiles("none")
+      setDisplayLink("none")
       Animated.timing(adminHeight, {
-        toValue: 100,
+        toValue: 50,
         duration: 1000,
       }).start()
       setTimeout(() => {
@@ -129,6 +147,15 @@ export const News: React.FunctionComponent<NewsProps> = props => {
     padding: spacing[3],
   }
 
+  const LINK: ViewStyle = {
+    display: displayLink,
+    flexDirection: "row",
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    height: 100
+  }
+
   const FILES: ViewStyle = {
     display: displayFiles,
     width: "100%",
@@ -136,16 +163,38 @@ export const News: React.FunctionComponent<NewsProps> = props => {
   }
 
   const ICON: ImageStyle = {
-    flex: 1,
+    width: 24,
+    resizeMode: "contain"
+  }
+
+  const LINK_BUTTON: ViewStyle = {
+    position: "absolute",
+    right: 70,
+    bottom: 16
+  }
+
+  const LINK_ICON: ImageStyle = {
     width: 24,
     resizeMode: "contain",
-    marginTop: spacing[4],
+
+  }
+
+  const LINK_TEXT_FIELD_TEXT: ViewStyle = {
+    borderWidth: 0,
+    flex: 1,
+    padding: spacing[3],
+    marginLeft: spacing[4],
+  }
+
+  const LINK_TEXT_FIELD: ViewStyle = {
+    width: "80%",
+    marginBottom: 18
   }
 
   const TEXT_FIELD_TEXT: ViewStyle = {
     borderWidth: 1,
-    borderRadius: 15,
-    borderColor: color.palette.black,
+    borderRadius: 100,
+    borderColor: "#D9DDE1",
     flex: 1,
     padding: spacing[3],
     marginLeft: spacing[4],
@@ -153,14 +202,13 @@ export const News: React.FunctionComponent<NewsProps> = props => {
 
   const TEXT_FIELD: ViewStyle = {
     width: "80%",
+    marginBottom: 18
   }
 
   const SENT_ICON: ImageStyle = {
-    flex: 1,
     width: 30,
     resizeMode: "contain",
-    marginLeft: spacing[3],
-    marginTop: spacing[4],
+    marginLeft: spacing[3]
   }
 
   const [flatList, setFlatList] = useState(null)
@@ -203,8 +251,16 @@ export const News: React.FunctionComponent<NewsProps> = props => {
     setRefreshFiles(true)
     if (message.files.length === 0) {
       setDisplayFiles("none")
+
+      let value: number
+      if (displayLink === "flex") {
+        value = 100
+      } else {
+        value = 50
+      }
+
       Animated.timing(adminHeight, {
-        toValue: 100,
+        toValue: value,
         duration: 1000,
       }).start()
     }
@@ -231,20 +287,79 @@ export const News: React.FunctionComponent<NewsProps> = props => {
   }
 
   const uploadFile = async () => {
-    const file = await DocumentPicker.pick({
-      type: [DocumentPicker.types.allFiles],
-    })
-    const result: boolean = await messageStore.uploadFile(message, file, loginStore.accessToken)
+// const file = await DocumentPicker.pick({
+    //   type: [DocumentPicker.types.allFiles],
+    // })
 
-    if (result) {
-      if (displayFiles === "none") {
-        setDisplayFiles("flex")
-        Animated.timing(adminHeight, {
-          toValue: 200,
-          duration: 1000,
-        }).start()
+    const options = {
+      title: 'Select File',
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    };
+
+    ImagePicker.showImagePicker(options, async (response) => {
+      console.log('Response = ', response);
+    
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else if (response.customButton) {
+        console.log('User tapped custom button: ', response.customButton);
+      } else {
+
+        // You can also display the image using data:
+        // const source = { uri: 'data:image/jpeg;base64,' + response.data };
+    
+        const result: boolean = await messageStore.uploadFile(message, response, loginStore.accessToken)
+
+        if (result) {
+          if (displayFiles === "none") {
+            setDisplayFiles("flex")
+            Animated.timing(adminHeight, {
+              toValue: 200,
+              duration: 1000,
+            }).start()
+          }
+          setRefreshFiles(true)
+        }
       }
-      setRefreshFiles(true)
+    });
+  }
+
+  const openLink = () => {
+    if (displayLink === "none") {
+
+      let value: number
+      if (displayFiles === "flex") {
+        value = 200
+      } else {
+        value = 100
+      }
+
+      Animated.timing(adminHeight, {
+        toValue: value,
+        duration: 1000,
+      }).start()
+      setDisplayLink("flex")
+    } else {
+
+      let value: number
+      if (displayFiles === "flex") {
+        value = 200
+      } else {
+        value = 50
+      }
+
+      Animated.timing(adminHeight, {
+        toValue: value,
+        duration: 1000,
+      }).start()
+      setTimeout(() => {
+        setDisplayLink("none")
+      }, 1000)
     }
   }
 
@@ -262,7 +377,8 @@ export const News: React.FunctionComponent<NewsProps> = props => {
   }
 
   return useObserver(() => (
-    <Screen style={ROOT} preset="fixed">
+    <View>
+      <StatusBar barStyle="default" />
       <ImageBackground source={backgroundImage} style={style.backgroundImage}>
         <FlatList
           ref={ref => setFlatList(ref)}
@@ -274,6 +390,16 @@ export const News: React.FunctionComponent<NewsProps> = props => {
         />
         {loginStore.role === "sudo" && (
           <Animated.View style={ADMIN}>
+            <View style={LINK}>
+              <Image style={ICON} source={linkIcon} />
+              <TextField
+                placeholderTx="messagesScreen.link"
+                style={LINK_TEXT_FIELD}
+                inputStyle={LINK_TEXT_FIELD_TEXT}
+                value={link.comment}
+                onChangeText={comment => link.setComment(comment)}
+              />
+            </View>
             <FlatList
               style={FILES}
               data={message.files}
@@ -296,9 +422,12 @@ export const News: React.FunctionComponent<NewsProps> = props => {
                 <Image style={SENT_ICON} source={sentIcon} />
               </TouchableOpacity>
             </View>
+            <TouchableOpacity style={LINK_BUTTON} onPress={openLink}>
+              <Image style={LINK_ICON} source={linkOpenIcon} />
+            </TouchableOpacity>
           </Animated.View>
         )}
       </ImageBackground>
-    </Screen>
+    </View>
   ))
 }

@@ -13,7 +13,7 @@ export interface WebViewScreenProps {
 }
 
 const ROOT: ViewStyle = {
-  backgroundColor: color.palette.black,
+  backgroundColor: "#00428c",
 }
 
 export const WebViewScreen: React.FunctionComponent<WebViewScreenProps> = observer(props => {
@@ -29,6 +29,7 @@ export const WebViewScreen: React.FunctionComponent<WebViewScreenProps> = observ
         }}
       />
       <WebView
+        originWhitelist={['*']}
         source={{
           uri: `${messageStore.url}?lang=${messageStore.language}`,
         }}

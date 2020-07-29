@@ -9,6 +9,9 @@ import {
   ImageGalleryScreen,
   WebViewScreen,
   MainScreen,
+  UserAgreementScreen,
+  PrivacyPolicyScreen,
+  FreenityInfoScreen,
 } from "../screens"
 import { PrimaryParamList } from "./types"
 import { translate } from "../i18n"
@@ -31,6 +34,9 @@ export function PrimaryNavigator() {
       <Stack.Screen name="imageGallery" component={ImageGalleryScreen}  />
       <Stack.Screen name="web" component={WebScreen} />
       <Stack.Screen name="webView" component={WebViewScreen} />
+      <Stack.Screen name="freenityInfo" component={FreenityInfoScreen} options={{ title: translate("common.appName"), headerShown: true }} />
+      <Stack.Screen name="userAgreement" component={UserAgreementScreen} options={{ title: translate("menu.userAgreement"), headerShown: true }} />
+      <Stack.Screen name="privacyPolicy" component={PrivacyPolicyScreen} options={{ title: translate("menu.privacyPolicy"), headerShown: true }} />
     </Stack.Navigator>
   )
 }

@@ -110,7 +110,7 @@ export const RegisterScreen: React.FunctionComponent<RegisterScreenProps> = obse
         tx="common.login"
         style={LOGIN}
         textStyle={LOGIN_TEXT}
-        onPress={() => props.navigation.push("login")}
+        onPress={() => props.navigation.navigate("login")}
       />
     </ImageBackground>
   )

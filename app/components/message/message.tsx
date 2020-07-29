@@ -69,8 +69,12 @@ const HEADER_TEXT: TextStyle = {
 
 const ICON: ImageStyle = {
   flex: 1,
-  width: 24,
+  width: 30,
   resizeMode: "contain",
+}
+
+const FAVOURITE: ViewStyle = {
+  marginTop: -50
 }
 
 const HEADER: ViewStyle = {
@@ -131,8 +135,6 @@ const AUTHOR_NAME: ViewStyle = {
 }
 
 const TITLE: TextStyle = {
-  marginTop: spacing[4],
-  marginBottom: spacing[4],
   color: color.palette.black,
   fontWeight: "bold",
 }
@@ -190,11 +192,40 @@ const DOUBLE_VIDEO_RIGHT: ViewStyle = {
   borderRadius: 10,
 }
 
-const VIEWS: TextStyle = {
-  marginTop: spacing[1],
-  fontSize: 10,
-  marginLeft: spacing[1],
-  color: color.text,
+const MESSAGE_DATE: TextStyle = {
+  //marginTop: spacing[1],
+  fontSize: 9,
+  //marginLeft: spacing[1],
+  color: "rgba(51,51,51,0.2)",
+}
+
+const MESSAGE_VIEW: TextStyle = {
+  //marginTop: spacing[1],
+  fontSize: 9,
+  //marginLeft: spacing[1],
+  color: "rgba(51,51,51,0.2)",
+}
+
+const MESSAGE_INFO: ViewStyle = {
+  flexDirection: "row",
+  marginRight: 74,
+  padding: 0,
+  alignSelf: "flex-end",
+}
+
+const MESSAGE_BUTTONS: ViewStyle = {
+  borderTopColor: "#E7E7E7",
+  borderTopWidth: 1,
+  marginLeft: -12,
+  marginRight: -12,
+}
+
+const REMOVE: ImageStyle = {
+  height: 17,
+  resizeMode: "contain",
+  alignSelf: "flex-end",
+  paddingTop: 50,
+  marginRight: 10.74,
 }
 
 /**
@@ -210,10 +241,12 @@ export function Message(props: MessageProps) {
   const { style, textStyle, message, language, navigation, ...rest } = props
 
   const siteNamePress = () => {
-    Linking.openURL(message.url)
+    messageStore.saveUrl(message.url)
+    navigation.navigate("webView")
   }
   const authorNameLinkPress = () => {
-    Linking.openURL(`https:${message.author.url}`)
+    messageStore.saveUrl(`https:${message.author.url}`)
+    navigation.navigate("webView")
   }
   const removePress = () => {
     Alert.alert(
@@ -278,35 +311,37 @@ export function Message(props: MessageProps) {
       const file = message.files[i]
 
       if (file.type === "image") {
-        if (i !== message.files.length - 1 && i % 2 == 0)
+        if (i !== message.files.length - 1 && i % 2 == 0) {
           files.push(
-            <TouchableOpacity onPress={() => imagePress(i)}>
+            <TouchableOpacity style={FILES} onPress={() => imagePress(i)}>
               <AutoHeightImage
                 key={file.name}
-                width={Dimensions.get("window").width * 0.3}
+                width={Dimensions.get("window").width * 0.7}
                 source={{ uri: file.preview }}
-                style={DOUBLE_IMAGE_LEFT}
+                style={SINGLE_IMAGE}
               />
             </TouchableOpacity>,
           )
-        else if (i !== message.files.length - 1 && i % 2 == 1)
+          files.push(<View></View>)
+        } else if (i !== message.files.length - 1 && i % 2 == 1) {
           files.push(
-            <TouchableOpacity onPress={() => imagePress(i)}>
+            <TouchableOpacity style={FILES} onPress={() => imagePress(i)}>
               <AutoHeightImage
                 key={file.name}
-                width={Dimensions.get("window").width * 0.3}
+                width={Dimensions.get("window").width * 0.7}
                 source={{ uri: file.preview }}
-                style={DOUBLE_IMAGE_RIGHT}
+                style={SINGLE_IMAGE}
               />
             </TouchableOpacity>,
           )
+        }
       } else if (file.type == "video") {
         if (i !== message.files.length - 1 && i % 2 == 0)
           files.push(
             <FullScreenVideo
               key={file.name}
               source={{ uri: file.url }}
-              style={DOUBLE_VIDEO_LEFT}
+              style={SINGLE_VIDEO}
             />,
           )
         else if (i !== message.files.length - 1 && i % 2 == 1)
@@ -314,7 +349,7 @@ export function Message(props: MessageProps) {
             <FullScreenVideo
               key={file.name}
               source={{ uri: file.url }}
-              style={DOUBLE_VIDEO_RIGHT}
+              style={SINGLE_VIDEO}
             />,
           )
       }
@@ -343,105 +378,144 @@ export function Message(props: MessageProps) {
     if (messageStore.activeFiles.length !== 0) navigation.navigate("imageGallery")
     else {
       messageStore.saveUrl(`https://www.freenity.news/viewApp/${message.id}`)
-      navigation.push("webView")
+      navigation.navigate("webView")
     }
     //else Alert.alert(translate("errors.error"), translate("errors.invalidPhoto"))
   }
 
   return (
-    <View style={CONTAINER}>
-      <View style={MESSAGE}>
-        <View style={HEADER}>
-          <View style={HEADER_LOGO}>
-            <Image source={logo} style={LOGO} />
-            <Text style={HEADER_TEXT} text="Freenity" />
-          </View>
-          {eval("message.comment_" + language) !== null && (
-            <Text text={eval("message.comment_" + language)} style={MESSAGE_TEXT} />
-          )}
-        </View>
-
-        <TouchableOpacity
-          {...rest}
-          onPress={() => {
-            messageStore.saveUrl(`https://www.freenity.news/viewApp/${message.id}`)
-            navigation.push("webView")
-          }}
-        >
-          {message.site_name !== null && (
-            <View style={SITE_NAME}>
-              <Button preset="link" text={message.site_name} onPress={siteNamePress} style={LINK} />
-              <Text text=" " style={MESSAGE_TEXT} />
-              {message.date !== null && (
-                <View style={AUTHOR_URL}>
-                  <Text tx="messageScreen.from" style={MESSAGE_TEXT} />
-                  <Text text=" " style={MESSAGE_TEXT} />
-                  <Text text={message.date} style={MESSAGE_TEXT} />
-                </View>
-              )}
+    <View>
+      <View style={CONTAINER}>
+        <View style={MESSAGE}>
+          <View style={HEADER}>
+            <View style={HEADER_LOGO}>
+              <Image source={logo} style={LOGO} />
+              <Text style={HEADER_TEXT} text="Freenity" />
             </View>
-          )}
+            {eval("message.comment_" + language) !== null && (
+              <Text text={eval("message.comment_" + language)} style={MESSAGE_TEXT} />
+            )}
+          </View>
 
-          {message.author !== null && (
-            <View style={AUTHOR}>
-              {message.author.name !== null && (
-                <View style={AUTHOR_NAME}>
-                  <Text tx="messageScreen.author" style={MESSAGE_TEXT} />
-                  <Text text=" " style={MESSAGE_TEXT} />
-                  <Button
-                    preset="link"
-                    text={message.author.name}
-                    onPress={authorNameLinkPress}
-                    style={LINK}
+          <TouchableOpacity
+            {...rest}
+            onPress={() => {
+              messageStore.saveUrl(`https://www.freenity.news/viewApp/${message.id}`)
+              navigation.navigate("webView")
+            }}
+          >
+            {/* {message.site_name !== null && (
+              <View style={SITE_NAME}>
+                <Button
+                  preset="link"
+                  text={message.site_name}
+                  onPress={siteNamePress}
+                  style={LINK}
+                />
+                <Text text=" " style={MESSAGE_TEXT} />
+                {message.date !== null && (
+                  <View style={AUTHOR_URL}>
+                    <Text tx="messageScreen.from" style={MESSAGE_TEXT} />
+                    <Text text=" " style={MESSAGE_TEXT} />
+                    <Text text={message.date} style={MESSAGE_TEXT} />
+                  </View>
+                )}
+              </View>
+            )} */}
+
+            {/* {message.author !== null && (
+              <View style={AUTHOR}>
+                {message.author.name !== null && (
+                  <View style={AUTHOR_NAME}>
+                    <Text tx="messageScreen.author" style={MESSAGE_TEXT} />
+                    <Text text=" " style={MESSAGE_TEXT} />
+                    <Button
+                      preset="link"
+                      text={message.author.name}
+                      onPress={authorNameLinkPress}
+                      style={LINK}
+                    />
+                  </View>
+                )}
+              </View>
+            )} */}
+
+            {message.files.length > 0 && <View >{getFiles()}</View>}
+
+            {message.files.length > 0 &&
+              message.files.length % 2 == 1 &&
+              message.files[message.files.length - 1].type == "image" && (
+                <TouchableOpacity
+                  style={FILES}
+                  onPress={() => imagePress(message.files.length - 1)}
+                >
+                  <AutoHeightImage
+                    key={message.files[message.files.length - 1].name}
+                    width={Dimensions.get("window").width * 0.7}
+                    source={{ uri: message.files[message.files.length - 1].preview }}
+                    style={SINGLE_IMAGE}
+                  />
+                </TouchableOpacity>
+              )}
+
+            {message.files.length > 0 &&
+              message.files.length % 2 == 1 &&
+              message.files[message.files.length - 1].type == "video" && (
+                <View style={FILES}>
+                  <FullScreenVideo
+                    key={message.files[message.files.length - 1].name}
+                    source={{ uri: message.files[message.files.length - 1].url }}
+                    style={SINGLE_VIDEO}
                   />
                 </View>
               )}
-            </View>
-          )}
 
-          {eval("message.title_" + language) !== null && (
-            <Text text={eval("message.title_" + language)} style={TITLE} />
-          )}
-
-          {message.files.length > 0 && <View style={FILES}>{getFiles()}</View>}
-
-          {message.files.length > 0 &&
-            message.files.length % 2 == 1 &&
-            message.files[message.files.length - 1].type == "image" && (
-              <TouchableOpacity style={FILES} onPress={() => imagePress(message.files.length - 1)}>
-                <AutoHeightImage
-                  key={message.files[message.files.length - 1].name}
-                  width={Dimensions.get("window").width * 0.6}
-                  source={{ uri: message.files[message.files.length - 1].preview }}
-                  style={SINGLE_IMAGE}
-                />
-              </TouchableOpacity>
+            {eval("message.title_" + language) !== null && (
+              <Text text={eval("message.title_" + language)} style={TITLE} />
             )}
 
-          {message.files.length > 0 &&
-            message.files.length % 2 == 1 &&
-            message.files[message.files.length - 1].type == "video" && (
-              <View style={FILES}>
-                <FullScreenVideo
-                  key={message.files[message.files.length - 1].name}
-                  source={{ uri: message.files[message.files.length - 1].url }}
-                  style={SINGLE_VIDEO}
+            {message.site_name !== null && (
+              <View style={SITE_NAME}>
+                <Button
+                  preset="link"
+                  text={message.site_name}
+                  onPress={siteNamePress}
+                  style={LINK}
                 />
               </View>
             )}
 
-          {eval("message.description_" + language) !== null && (
-            <Text text={eval("message.description_" + language)} style={DESCRIPTION} />
+            {eval("message.description_" + language) !== null && (
+              <Text text={eval("message.description_" + language)} style={DESCRIPTION} />
+            )}
+          </TouchableOpacity>
+          {loginStore.role === "sudo" && (
+            <View style={MESSAGE_BUTTONS}>
+              <TouchableOpacity onPress={removePress}>
+                <Image source={remove} style={REMOVE} />
+              </TouchableOpacity>
+            </View>
           )}
-        </TouchableOpacity>
+        </View>
+        <View style={BUTTONS}>
+          <TouchableOpacity onPress={sharePress}>
+            <Image source={share} style={ICON} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={favouritePress} style={FAVOURITE}>
+            <Image source={isFavourite ? favourite : unfavourite} style={ICON} />
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={BUTTONS}>
-        <TouchableOpacity onPress={sharePress}>
-          <Image source={share} style={ICON} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={favouritePress}>
-          <Image source={isFavourite ? favourite : unfavourite} style={ICON} />
-        </TouchableOpacity>
+      <View style={MESSAGE_INFO}>
+        {/* <Text text={message.created_at.toLocaleString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) + ", " + message.created_at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} /> */}
+        <Text
+          style={MESSAGE_DATE}
+          text={
+            message.created_at.toLocaleDateString() + ", " + message.created_at.toLocaleTimeString()
+          }
+        />
+        <Text text="            " />
+        <Text style={MESSAGE_VIEW} text={message.views + " " + translate("messageScreen.views")} />
       </View>
     </View>
   )

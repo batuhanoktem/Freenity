@@ -4,9 +4,8 @@ import { useObserver } from "mobx-react-lite"
 import { Text, Button } from "../"
 import { Cell, Section, TableView } from "react-native-tableview-simple"
 import { useStores } from "../../models/root-store"
-import { moreStyles as styles } from "./more.styles"
 import { translate } from "../../i18n"
-import { color, spacing } from "../../theme"
+import { spacing } from "../../theme"
 import { NativeStackNavigationProp } from "react-native-screens/native-stack"
 import { StackActions } from "@react-navigation/native"
 const userAgreement = require("./images/user-agreement.png")
@@ -47,7 +46,7 @@ const ABOUT_MAIL: TextStyle = {
 export const More: React.FunctionComponent<MoreProps> = props => {
   const { loginStore } = useStores()
 
-  const AboutCell = props => (
+  const AboutCell = () => (
     <Cell
       {...props}
       cellContentView={
@@ -57,7 +56,10 @@ export const More: React.FunctionComponent<MoreProps> = props => {
             textStyle={[ABOUT_LINK, ABOUT_WEBSITE]}
             preset="link"
             text="www.freenity.info"
-            onPress={() => Linking.openURL("https://www.freenity.info")}
+            onPress={() => { 
+              //messageStore.saveUrl("https://www.freenity.info")
+              props.navigation.navigate("freenityInfo")
+            }}
           />
           <Button
             textStyle={ABOUT_LINK}
@@ -90,14 +92,20 @@ export const More: React.FunctionComponent<MoreProps> = props => {
           cellStyle="Basic"
           title={translate("menu.userAgreement")}
           accessory="DisclosureIndicator"
-          onPress={() => console.log("")}
+          onPress={() => { 
+            //messageStore.saveUrl("https://www.freenity.news/terms.html")
+            props.navigation.navigate("userAgreement")
+          }}
         />
         <Cell
           image={<Image source={privacyPolicy} />}
           cellStyle="Basic"
           title={translate("menu.privacyPolicy")}
           accessory="DisclosureIndicator"
-          onPress={() => console.log("")}
+          onPress={() => { 
+            //messageStore.saveUrl("https://www.freenity.news/privacy.html")
+            props.navigation.navigate("privacyPolicy")
+          }}
         />
       </Section>
       <Section header={translate("menu.account")}>

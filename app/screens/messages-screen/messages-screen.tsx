@@ -23,6 +23,7 @@ import { useStores } from "../../models/root-store"
 import { useEffect, useState, useRef } from "react"
 import { MessageRequestModel } from "../../models/message-request"
 import DocumentPicker from "react-native-document-picker"
+import ImagePicker from "react-native-image-picker";
 
 const backgroundImage = require("../../images/background.png")
 const attachmentIcon = require("./images/attachment.png")
@@ -100,7 +101,7 @@ export const MessagesScreen: React.FunctionComponent<MessagesScreenProps> = obse
       }
 
       if (!messageStore.refreshing) {
-        messageStore.getMessages(0, loginStore.accessToken)
+        messageStore.getMessages(0, messageStore.language, loginStore.accessToken)
       }
     }
     ws.onclose = e => {
@@ -179,7 +180,7 @@ export const MessagesScreen: React.FunctionComponent<MessagesScreenProps> = obse
     if (flatList !== null) {
       messageStore.clearMessages()
       messageStore.saveOffset(0)
-      messageStore.getMessages(0, loginStore.accessToken, () => {
+      messageStore.getMessages(0, messageStore.language, loginStore.accessToken, () => {
         setTimeout(() => flatList.scrollToEnd({ animated: true }), 1500)
       })
 
@@ -232,33 +233,60 @@ export const MessagesScreen: React.FunctionComponent<MessagesScreenProps> = obse
   const onRefresh = () => {
     if (!messageStore.refreshing) {
       messageStore.saveOffset(messageStore.offset + 10)
-      messageStore.getMessages(messageStore.offset, loginStore.accessToken)
+      messageStore.getMessages(messageStore.offset, messageStore.language, loginStore.accessToken)
     }
   }
 
   const uploadFile = async () => {
-    const file = await DocumentPicker.pick({
-      type: [DocumentPicker.types.allFiles],
-    })
-    const result: boolean = await messageStore.uploadFile(message, file, loginStore.accessToken)
+    // const file = await DocumentPicker.pick({
+    //   type: [DocumentPicker.types.allFiles],
+    // })
 
-    if (result) {
-      if (displayFiles === "none") {
-        setDisplayFiles("flex")
-        Animated.timing(adminHeight, {
-          toValue: 200,
-          duration: 1000,
-        }).start()
+    const options = {
+      title: 'Select File',
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    };
+
+    ImagePicker.showImagePicker(options, async (response) => {
+      console.log('Response = ', response);
+    
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else if (response.customButton) {
+        console.log('User tapped custom button: ', response.customButton);
+      } else {
+
+        // You can also display the image using data:
+        // const source = { uri: 'data:image/jpeg;base64,' + response.data };
+    
+        const result: boolean = await messageStore.uploadFile(message, response, loginStore.accessToken)
+
+        if (result) {
+          if (displayFiles === "none") {
+            setDisplayFiles("flex")
+            Animated.timing(adminHeight, {
+              toValue: 200,
+              duration: 1000,
+            }).start()
+          }
+          setRefreshFiles(true)
+        }
       }
-      setRefreshFiles(true)
-    }
+    });
+
+    
   }
 
   const logoPress = () => {
     messageStore.saveFavourites(false)
     messageStore.clearMessages()
     messageStore.saveOffset(0)
-    messageStore.getMessages(0, loginStore.accessToken, () => {
+    messageStore.getMessages(0, messageStore.language, loginStore.accessToken, () => {
       setTimeout(() => flatList.scrollToEnd({ animated: true }), 1500)
     })
   }
